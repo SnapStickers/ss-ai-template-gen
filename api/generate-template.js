@@ -21,17 +21,17 @@ export default async function handler(req, res) {
     } = req.body;
 
     const prompt = `
-You are editing a personalized printable sticker template.
+You are creating a personalized printable wedding sticker from a blank template image.
 
-REFERENCE IMAGE:
-Use this product image URL as the visual reference:
+REFERENCE TEMPLATE IMAGE:
+Use this image URL as the visual template:
 ${referenceImageUrl}
 
 CORE GOAL:
-Create a new personalized version of the same sticker design.
-Do not invent a brand new design.
-Do not reinterpret the style.
-Do not change the visual identity unless the customer specifically asks for it.
+Use the provided blank template as the base design.
+Do not redesign the sticker.
+Do not change the floral artwork, border, background, gold accents, or "Thank You" headline.
+Only add the customer's names and date into the blank lower area.
 
 TEMPLATE INSTRUCTIONS:
 ${templateInstructions}
@@ -45,17 +45,18 @@ ${generationInstructions}
 CUSTOMER PERSONALIZATION:
 Names: ${fields.names || ""}
 Date: ${fields.date || ""}
-Message: ${fields.message || ""}
 Color/style notes: ${fields.color || ""}
 
 STRICT OUTPUT RULES:
-- Preserve the same overall composition as the reference image.
-- Preserve the same circular sticker shape.
-- Preserve the same background color and texture.
-- Preserve the same border placement and gold accent style.
-- Preserve the same floral placement and visual balance.
-- Preserve the same typography hierarchy and font style as closely as possible.
-- Replace only the personalized text fields.
+- Keep the same circular sticker layout.
+- Keep the same cream background.
+- Keep the same blush floral artwork.
+- Keep the same green leaves.
+- Keep the same gold border lines and gold accents.
+- Keep the "Thank You" script exactly as part of the design.
+- Add the customer names in the lower center blank area.
+- Add the date below the names.
+- Match the elegant wedding typography style as closely as possible.
 - Keep the design centered, clean, readable, premium, and print-ready.
 - Output a square sticker design.
 `;
