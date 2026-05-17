@@ -12,24 +12,52 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { referenceImageUrl, instructions, fields = {} } = req.body;
+    const {
+      referenceImageUrl,
+      templateInstructions = "",
+      preserveRules = "",
+      generationInstructions = "",
+      fields = {}
+    } = req.body;
 
     const prompt = `
-Create a personalized wedding circle sticker.
+You are editing a personalized printable sticker template.
 
+REFERENCE IMAGE:
 Use this product image URL as the visual reference:
 ${referenceImageUrl}
 
-Instructions:
-${instructions}
+CORE GOAL:
+Create a new personalized version of the same sticker design.
+Do not invent a brand new design.
+Do not reinterpret the style.
+Do not change the visual identity unless the customer specifically asks for it.
 
-Customer text:
+TEMPLATE INSTRUCTIONS:
+${templateInstructions}
+
+PRESERVE RULES:
+${preserveRules}
+
+GENERATION INSTRUCTIONS:
+${generationInstructions}
+
+CUSTOMER PERSONALIZATION:
 Names: ${fields.names || ""}
 Date: ${fields.date || ""}
 Message: ${fields.message || ""}
 Color/style notes: ${fields.color || ""}
 
-Keep the same elegant wedding sticker style, circular layout, blush florals, gold accents, centered composition, and premium printable sticker look.
+STRICT OUTPUT RULES:
+- Preserve the same overall composition as the reference image.
+- Preserve the same circular sticker shape.
+- Preserve the same background color and texture.
+- Preserve the same border placement and gold accent style.
+- Preserve the same floral placement and visual balance.
+- Preserve the same typography hierarchy and font style as closely as possible.
+- Replace only the personalized text fields.
+- Keep the design centered, clean, readable, premium, and print-ready.
+- Output a square sticker design.
 `;
 
     const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
@@ -56,6 +84,7 @@ Keep the same elegant wedding sticker style, circular layout, blush florals, gol
 
     return res.status(200).json({
       success: true,
+      prompt,
       openai: data
     });
 
