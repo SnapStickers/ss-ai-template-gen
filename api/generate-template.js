@@ -1,12 +1,4 @@
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export default async function handler(req, res) {
-
-  // ===== CORS =====
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -16,49 +8,61 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-
-    const {
-      referenceImageUrl,
-      instructions,
-      fields
-    } = req.body;
+    const { referenceImageUrl, instructions, fields = {} } = req.body;
 
     const prompt = `
-Reference Image:
+Create a personalized wedding circle sticker.
+
+Use this product image URL as the visual reference:
 ${referenceImageUrl}
 
 Instructions:
 ${instructions}
 
-Customer Personalization:
-Names: ${fields.names}
-Date: ${fields.date}
-Message: ${fields.message}
-Color Notes: ${fields.color}
+Customer text:
+Names: ${fields.names || ""}
+Date: ${fields.date || ""}
+Message: ${fields.message || ""}
+Color/style notes: ${fields.color || ""}
 
-Create a personalized sticker design that closely matches the reference image layout and style.
+Keep the same elegant wedding sticker style, circular layout, blush florals, gold accents, centered composition, and premium printable sticker look.
 `;
 
-    const result = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt,
-      size: "1024x1024"
+    const openaiResponse = await fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt,
+        size: "1024x1024"
+      })
     });
 
-    return res.status(200).json(result);
+    const data = await openaiResponse.json();
+
+    if (!openaiResponse.ok) {
+      return res.status(openaiResponse.status).json({
+        error: "OpenAI request failed",
+        details: data
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      openai: data
+    });
 
   } catch (error) {
-
-    console.error(error);
-
     return res.status(500).json({
-      error: error.message
+      error: "Server error",
+      details: error.message
     });
   }
 }
