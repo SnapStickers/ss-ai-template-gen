@@ -1,73 +1,64 @@
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 export default async function handler(req, res) {
-  // Only allow POST requests
-  if (req.method !== 'POST') {
+
+  // ===== CORS =====
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  if (req.method !== "POST") {
     return res.status(405).json({
-      error: 'Method not allowed'
+      error: "Method not allowed"
     });
   }
 
   try {
+
     const {
       referenceImageUrl,
       instructions,
       fields
     } = req.body;
 
-    // Basic validation
-    if (!referenceImageUrl) {
-      return res.status(400).json({
-        error: 'Missing reference image URL'
-      });
-    }
+    const prompt = `
+Reference Image:
+${referenceImageUrl}
 
-    // Build customer text block
-    const customerText = Object.entries(fields || {})
-      .map(([key, value]) => `${key}: ${value}`)
-      .join(', ');
-
-    // Final AI prompt
-    const finalPrompt = `
-Use the provided sticker image as the main reference.
-
+Instructions:
 ${instructions}
 
-Customer personalization:
-${customerText}
+Customer Personalization:
+Names: ${fields.names}
+Date: ${fields.date}
+Message: ${fields.message}
+Color Notes: ${fields.color}
 
-Keep the same sticker shape, border, style, colors, composition, and wedding aesthetic.
-Only change the personalized text and requested details.
-Return a clean square printable sticker design on a transparent or plain background.
+Create a personalized sticker design that closely matches the reference image layout and style.
 `;
 
-    // OpenAI request
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt: finalPrompt,
-        size: '1024x1024'
-      })
+    const result = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt,
+      size: "1024x1024"
     });
 
-    const data = await response.json();
-
-    // Return response
-    return res.status(200).json({
-      success: true,
-      prompt: finalPrompt,
-      openai: data
-    });
+    return res.status(200).json(result);
 
   } catch (error) {
+
     console.error(error);
 
     return res.status(500).json({
-      error: 'Something went wrong',
-      details: error.message
+      error: error.message
     });
   }
 }
